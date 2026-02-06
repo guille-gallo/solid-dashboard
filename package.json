@@ -1,0 +1,24 @@
+{
+  "name": "solid-dashboard",
+  "version": "0.0.1",
+  "description": "A dashboard app built with Solid.js, Vite, Kobalte & Tailwind CSS",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "solid-js": "^1.9.5",
+    "@solidjs/router": "^0.15.3",
+    "@kobalte/core": "^0.13.9"
+  },
+  "devDependencies": {
+    "vite": "^6.1.0",
+    "vite-plugin-solid": "^2.11.0",
+    "typescript": "^5.7.3",
+    "@tailwindcss/vite": "^4.0.0",
+    "tailwindcss": "^4.0.0"
+  }
+}
