@@ -49,6 +49,73 @@
   @apply w-px h-full mx-4;
 }
 
+/* ── Dark mode overrides ── */
+/* Applied via ancestor .dark-mode class — Solid toggles this on the root <div> */
+
+.dark-mode .bg-white {
+  background-color: var(--color-gray-900) !important;
+  border-color: var(--color-gray-700) !important;
+}
+
+.dark-mode .text-gray-900 {
+  color: var(--color-gray-100) !important;
+}
+
+.dark-mode .text-gray-500 {
+  color: var(--color-gray-400) !important;
+}
+
+.dark-mode .text-gray-400 {
+  color: var(--color-gray-500) !important;
+}
+
+.dark-mode .border-gray-100 {
+  border-color: var(--color-gray-700) !important;
+}
+
+.dark-mode .border-gray-200 {
+  border-color: var(--color-gray-700) !important;
+}
+
+.dark-mode .bg-gray-100 {
+  background-color: var(--color-gray-800) !important;
+}
+
+.dark-mode .bg-gray-50 {
+  background-color: var(--color-gray-950) !important;
+}
+
+.dark-mode .hover\:bg-gray-50:hover {
+  background-color: var(--color-gray-800) !important;
+}
+
+.dark-mode input {
+  background-color: var(--color-gray-800) !important;
+  border-color: var(--color-gray-600) !important;
+  color: var(--color-gray-100) !important;
+}
+
+.dark-mode .progress-track {
+  background-color: var(--color-gray-700) !important;
+}
+
+.dark-mode .kb-separator {
+  background-color: var(--color-gray-700) !important;
+}
+
+.dark-mode .kb-tabs-trigger {
+  color: var(--color-gray-400);
+}
+
+.dark-mode .kb-tabs-trigger:hover {
+  color: var(--color-gray-200);
+  border-color: var(--color-gray-500);
+}
+
+.dark-mode .kb-tabs-list {
+  border-color: var(--color-gray-700);
+}
+
 /* Animations */
 @keyframes fadeIn {
   from {
