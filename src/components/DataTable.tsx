@@ -39,7 +39,7 @@
  *  with the nearest Suspense boundary (via SuspenseContext).
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
-import { For, Show, createSignal, createResource } from "solid-js";
+import { For, Show, createSignal, createResource, createEffect } from "solid-js";
 import { Separator } from "@kobalte/core/separator";
 
 // ── Types ──
@@ -128,76 +128,91 @@ const statusColor: Record<Row["status"], string> = {
   Pending: "bg-amber-100 text-amber-700",
 };
 
-// ── Skeleton loader (shown by Suspense while fetching) ──
+// ── Inline skeleton (shown during initial load, inside the component) ──
 
-export function DataTableSkeleton() {
+function SkeletonRows() {
   return (
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 animate-pulse">
-      <div class="flex items-center justify-between mb-4">
-        <div class="h-5 w-32 bg-gray-200 rounded" />
-        <div class="h-8 w-56 bg-gray-200 rounded-lg" />
-      </div>
-      <Separator class="kb-separator" />
-      <div class="space-y-4 mt-4">
-        <For each={[1, 2, 3, 4, 5, 6]}>
-          {() => (
-            <div class="flex items-center gap-4">
-              <div class="flex-1 space-y-1.5">
-                <div class="h-4 w-36 bg-gray-200 rounded" />
-                <div class="h-3 w-48 bg-gray-100 rounded" />
-              </div>
-              <div class="h-4 w-24 bg-gray-200 rounded" />
-              <div class="h-5 w-16 bg-gray-200 rounded-full" />
-              <div class="h-4 w-20 bg-gray-200 rounded ml-auto" />
+    <div class="animate-pulse space-y-4 mt-4">
+      <For each={Array.from({ length: PAGE_SIZE })}>
+        {() => (
+          <div class="flex items-center gap-4">
+            <div class="flex-1 space-y-1.5">
+              <div class="h-4 w-36 bg-gray-200 rounded" />
+              <div class="h-3 w-48 bg-gray-100 rounded" />
             </div>
-          )}
-        </For>
-      </div>
+            <div class="h-4 w-24 bg-gray-200 rounded" />
+            <div class="h-5 w-16 bg-gray-200 rounded-full" />
+            <div class="h-4 w-20 bg-gray-200 rounded ml-auto" />
+          </div>
+        )}
+      </For>
     </div>
   );
 }
 
 // ── Main component ──
+// LEARNING: Why we DON'T use <Suspense> here
+// ────────────────────────────────────────────
+// Suspense is great for initial loads — it shows a fallback while the
+// resource is "pending". But when the source signal changes (pagination),
+// Solid transitions the resource to "refreshing" state, and whether
+// Suspense re-triggers depends on subtle timing inside the runtime.
+//
+// In practice this caused the table to be REPLACED by the skeleton on
+// every page change, causing a dramatic height jump. The fix:
+//
+// 1. Don't use <Suspense> at all for this component
+// 2. Store last successful data in a SEPARATE signal ("snapshot")
+// 3. Always render from the snapshot — it never goes undefined
+// 4. Show skeleton only on initial load, table forever after
+// 5. Pad short pages with invisible rows for stable height
+//
+// This is the "optimistic UI" pattern: always show the last known
+// good state while new data loads in the background.
 
 export default function DataTable() {
-  // LEARNING: `page` is the SOURCE SIGNAL for createResource.
-  // ──────────────────────────────────────────────────────────
-  // Whenever `page` changes, the fetcher automatically re-runs.
-  // You don't need useEffect, no manual refetch call — the signal
-  // dependency does it. This is the "signal drives the fetch" pattern.
   const [page, setPage] = createSignal(0);
-
-  // LEARNING: createResource(source, fetcher)
-  // ──────────────────────────────────────────
-  // `page` is passed as the first argument to fetchUsers.
-  // `users` is a reactive resource: users(), users.loading, users.error
-  // `mutate` lets you overwrite the data without refetching.
-  // `refetch` re-runs the fetcher with the current source value.
-  //
-  // We destructure `refetch` for the Retry button in the error state.
-  // Setting page to its same value wouldn't trigger a re-fetch (Solid
-  // uses === equality), so refetch() is the right tool for retries.
   const [users, { refetch }] = createResource(page, fetchUsers);
 
-  const totalPages = () => {
+  // LEARNING: The "snapshot" pattern
+  // ────────────────────────────────
+  // `users()` can be undefined during fetches (the resource hasn't
+  // resolved yet). If we render from `users()` directly, the table
+  // would briefly have 0 rows every time we paginate.
+  //
+  // Instead, we keep a snapshot: a plain signal that only updates
+  // when `users()` has actual data. This means:
+  //   - During fetch: snapshot holds the PREVIOUS page's data
+  //   - Fetch completes: snapshot updates to the new page's data
+  //   - The table always has rows to display
+  const [snapshot, setSnapshot] = createSignal<{ rows: Row[]; total: number } | null>(null);
+
+  createEffect(() => {
     const data = users();
-    return data ? Math.ceil(data.total / PAGE_SIZE) : 0;
-  };
+    if (data) setSnapshot(data);
+  });
+
+  // Derived state — all based on the stable snapshot
+  const displayRows = () => snapshot()?.rows ?? [];
+  const total = () => snapshot()?.total ?? 0;
+  const totalPages = () => Math.ceil(total() / PAGE_SIZE);
+  const hasLoaded = () => snapshot() !== null;
+  const isFetching = () => !hasLoaded() || users.state === "refreshing" || users.state === "pending";
 
   return (
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-base font-semibold">Team Members</h3>
-        <Show when={users() && !users.error}>
-          <p class="text-xs text-gray-400">{users()?.total} total members</p>
+        <Show when={hasLoaded()}>
+          <p class="text-xs text-gray-400">{total()} total members</p>
         </Show>
       </div>
 
       <Separator class="kb-separator" />
 
       {/* Error state */}
-      <Show when={users.error}>
-        <div class="py-8 text-center text-red-500 text-sm min-h-[340px] flex flex-col items-center justify-center">
+      <Show when={users.error && !hasLoaded()}>
+        <div class="py-8 text-center text-red-500 text-sm">
           <p class="font-medium">Failed to load team members</p>
           <p class="text-xs mt-1">{String(users.error)}</p>
           <button
@@ -209,11 +224,15 @@ export default function DataTable() {
         </div>
       </Show>
 
-      {/* Table — shown when we have data (even while refreshing) */}
-      <Show when={!users.error}>
-        {/* Refreshing indicator — subtle overlay while paginating */}
-        <div class={`overflow-x-auto transition-opacity duration-200 min-h-[340px] ${
-          users.state === "refreshing" ? "opacity-50" : "opacity-100"
+      {/* Initial loading: skeleton rows (only before first data arrives) */}
+      <Show when={!hasLoaded() && !users.error}>
+        <SkeletonRows />
+      </Show>
+
+      {/* Table: rendered once data arrives, never removed after that */}
+      <Show when={hasLoaded()}>
+        <div class={`overflow-x-auto transition-opacity duration-200 ${
+          isFetching() ? "opacity-40 pointer-events-none" : "opacity-100"
         }`}>
           <table class="w-full text-sm">
             <thead>
@@ -225,7 +244,8 @@ export default function DataTable() {
               </tr>
             </thead>
             <tbody>
-              <For each={users()?.rows ?? []}>
+              {/* Data rows */}
+              <For each={displayRows()}>
                 {(row) => (
                   <tr class="border-t border-gray-100 hover:bg-gray-50 transition-colors">
                     <td class="py-3">
@@ -244,28 +264,44 @@ export default function DataTable() {
                   </tr>
                 )}
               </For>
+              {/* Invisible padding rows — identical DOM structure ensures
+                  the browser computes the same row height. This keeps the
+                  table height stable on the last page (fewer rows). */}
+              <For each={Array.from({ length: Math.max(0, PAGE_SIZE - displayRows().length) })}>
+                {() => (
+                  <tr class="border-t border-gray-100">
+                    <td class="py-3">
+                      <div class="font-medium invisible">Placeholder</div>
+                      <div class="text-xs invisible">placeholder@email.com</div>
+                    </td>
+                    <td class="py-3"><span class="invisible">Placeholder</span></td>
+                    <td class="py-3">
+                      <span class="text-xs px-2 py-0.5 rounded-full font-medium invisible">Active</span>
+                    </td>
+                    <td class="py-3 text-right"><span class="font-medium invisible">$0</span></td>
+                  </tr>
+                )}
+              </For>
             </tbody>
           </table>
         </div>
 
-        {/* ── Pagination ── */}
-        {/* LEARNING: setPage triggers createResource to re-fetch
-            because `page` is the source signal. No manual refetch needed. */}
+        {/* Pagination — always visible once data loads */}
         <Show when={totalPages() > 1}>
           <div class="flex items-center justify-between pt-4 border-t border-gray-100 mt-4">
             <p class="text-xs text-gray-400">
-              Page {page() + 1} of {totalPages()} · {users()?.total} members
+              Page {page() + 1} of {totalPages()} · {total()} members
             </p>
             <div class="flex gap-2">
               <button
-                disabled={page() === 0}
+                disabled={page() === 0 || isFetching()}
                 onClick={() => setPage((p) => p - 1)}
                 class="px-3 py-1 text-xs font-medium rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               >
                 ← Prev
               </button>
               <button
-                disabled={page() >= totalPages() - 1}
+                disabled={page() >= totalPages() - 1 || isFetching()}
                 onClick={() => setPage((p) => p + 1)}
                 class="px-3 py-1 text-xs font-medium rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               >
