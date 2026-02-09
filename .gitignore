@@ -2,6 +2,7 @@ node_modules
 dist
 .DS_Store
 *.local
+package-lock.json
 
 SOLID_REACTIVITY_EXPLAINED.md
 copilot-instructions.md
