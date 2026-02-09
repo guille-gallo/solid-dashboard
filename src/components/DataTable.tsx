@@ -1,6 +1,6 @@
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- *  LEARNING: createResource — async data fetching in Solid.js
+ *  createResource — async data fetching in Solid.js
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  *
  *  createResource wraps an async function (fetcher) into a reactive
@@ -151,7 +151,7 @@ function SkeletonRows() {
 }
 
 // ── Main component ──
-// LEARNING: Why we DON'T use <Suspense> here
+// Why we DON'T use <Suspense> here
 // ────────────────────────────────────────────
 // Suspense is great for initial loads — it shows a fallback while the
 // resource is "pending". But when the source signal changes (pagination),
@@ -174,7 +174,7 @@ export default function DataTable() {
   const [page, setPage] = createSignal(0);
   const [users, { refetch }] = createResource(page, fetchUsers);
 
-  // LEARNING: The "snapshot" pattern
+  // The "snapshot" pattern
   // ────────────────────────────────
   // `users()` can be undefined during fetches (the resource hasn't
   // resolved yet). If we render from `users()` directly, the table

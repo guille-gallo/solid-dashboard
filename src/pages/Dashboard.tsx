@@ -53,7 +53,7 @@ export default function Dashboard() {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2">
           {/*
-            LEARNING: Why DataTable is NOT wrapped in <Suspense>
+            Why DataTable is NOT wrapped in <Suspense>
             ─────────────────────────────────────────────────────
             We initially used <Suspense fallback={<Skeleton/>}> here.
             Suspense works great for initial loads, but when the

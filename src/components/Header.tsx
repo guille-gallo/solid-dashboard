@@ -3,7 +3,7 @@ import { Show } from "solid-js";
 import { useSettings } from "~/stores/settings";
 
 export default function Header() {
-  // ── LEARNING: reading from the store ──
+  // ── Reading from the store ──
   // `settings` is a reactive Proxy. Every property read inside JSX
   // (which compiles to an effect) creates a fine-grained subscription.
   //

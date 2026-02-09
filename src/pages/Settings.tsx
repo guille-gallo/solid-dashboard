@@ -39,7 +39,7 @@ function Toggle(props: { pressed: boolean; onToggle: () => void }) {
 }
 
 export default function Settings() {
-  // ── LEARNING: consuming the store ──
+  // ── Consuming the store ──
   // `settings` is the reactive Proxy (the "getter" side of createStore).
   // `actions` wrap setState with descriptive names.
   //
