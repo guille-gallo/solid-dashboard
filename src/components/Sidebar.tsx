@@ -29,7 +29,7 @@ export default function Sidebar() {
       {/* Navigation */}
       <nav class="flex-1 px-3 py-4 space-y-1">
         <NavLink href="/" label="Dashboard" icon="🏠" />
-        <NavLink href="/analytics" label="Analytics" icon="📈" />
+        <NavLink href="/workshop" label="Workshop" icon="🧪" />
         <NavLink href="/settings" label="Settings" icon="⚙️" />
       </nav>
 

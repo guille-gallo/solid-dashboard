@@ -6,3 +6,5 @@ package-lock.json
 
 SOLID_REACTIVITY_EXPLAINED.md
 copilot-instructions.md
+.unlighthouse
+mcp.json
