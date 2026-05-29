@@ -2,6 +2,7 @@
   "name": "solid-dashboard",
   "version": "0.0.1",
   "description": "A dashboard app built with Solid.js, Vite, Kobalte & Tailwind CSS",
+  "packageManager": "pnpm@11.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
